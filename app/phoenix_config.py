@@ -6,7 +6,7 @@ import os
 
 
 os.environ["PHOENIX_COLLECTOR_ENDPOINT"] = "https://app.phoenix.arize.com/s/kumar-pradeep-sharma/v1/traces"  
-os.environ["PHOENIX_API_KEY"] = "" 
+os.environ["PHOENIX_API_KEY"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJBcGlLZXk6MSJ9.DbfiCMSSXKlAIzIB8JJA5QYJGiigq_b3zbNwGwHNqjk" 
 # Registering tracer provider
 tracer_provider = register(
     project_name="KnowledgePilot",

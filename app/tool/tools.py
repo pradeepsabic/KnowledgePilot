@@ -16,7 +16,9 @@ load_dotenv()
 @tool("Document Retrieval Tool") 
 @tracer.chain
 def document_retrieval_tool(query: str) -> str:
-
+    """
+    Retrieves relevant documents based on the provided query using a PGVector vector store and embedding model.
+    """
     try:
         
         print(f"DEBUG: Tool received query parameter: {repr(query)}")
