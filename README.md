@@ -1,4 +1,4 @@
-# KnowledgePilot — Document Search Platform
+# KnowledgePilot
 An AgenticRAG-powered backend integrated with OpenWebUI frontend for intelligent, chat-style document search.
 
 #Problem Statement
@@ -19,5 +19,9 @@ Develop a document search platform where users interact through OpenWebUI's chat
 - Evaluation  
   RAGAs framework for Retrieval-Augmented Generation pipeline evaluation using a ground-truth JSON file.
 
-## Project Structure Overview
-
+#Deployment Instructions
+Clone the repository
+Set up Python environment
+Configure environment variables
+Run backend API uvicorn app.main:app --reload
+OpenWebUI should be configured separately to connect with the backend API
