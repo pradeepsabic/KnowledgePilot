@@ -20,8 +20,8 @@ Develop a document search platform where users interact through OpenWebUI's chat
   RAGAs framework for Retrieval-Augmented Generation pipeline evaluation using a ground-truth JSON file.
 
 #Deployment Instructions
-Clone the repository
-Set up Python environment
-Configure environment variables
-Run backend API uvicorn app.main:app --reload
-OpenWebUI should be configured separately to connect with the backend API
+-Clone the repository
+-Set up Python environment
+-Configure environment variables
+-Run backend API uvicorn app.main:app --reload
+-OpenWebUI should be configured separately to connect with the backend API
