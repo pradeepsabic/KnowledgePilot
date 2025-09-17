@@ -1,0 +1,8 @@
+ollama_llm:
+  provider: ollama
+  model: gemma3:4b
+  base_url: "http://localhost:11434"
+  temperature: 1
+  timeout: 300
+  max_tokens: 131072
+  num_ctx: 131072
