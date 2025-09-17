@@ -1,5 +1,6 @@
 # KnowledgePilot
 An AgenticRAG-powered backend integrated with OpenWebUI frontend for intelligent, chat-style document search.
+<img width="602" height="197" alt="image" src="https://github.com/user-attachments/assets/266fa1da-8a92-4800-948c-0cd2932d5270" />
 
 #Problem Statement
 Develop a document search platform where users interact through OpenWebUI's chat interface. The backend implements an AgenticRAG system exposing REST endpoints, enabling contextual retrieval over ingested PDF documents.
@@ -25,3 +26,5 @@ Develop a document search platform where users interact through OpenWebUI's chat
 -Configure environment variables
 -Run backend API uvicorn app.main:app --reload
 -OpenWebUI should be configured separately to connect with the backend API
+<img width="602" height="359" alt="image" src="https://github.com/user-attachments/assets/2b1e9939-7210-453b-ba2b-c472fbfd57ea" />
+
