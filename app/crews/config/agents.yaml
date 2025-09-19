@@ -12,13 +12,39 @@ research_agent:
     IMPORTANT: If no relevant information is found, return "No relevant information found for your query."
   verbose: true
   allow_delegation: true
-  delegate_to: answer_agent
+  delegate_to: validator_agent
   tools:Document Retrieval Tool: document_retrieval_tool
   max_iter: 3
   llm:
   model: "gemma:2b"
   provider: "ollama"
  
+validator_agent:
+  role: Validation Specialist
+  goal: Verify retrieved document chunks meet a minimum similarity threshold.
+  backstory: |
+    You receive document chunks from the Document Researcher.
+    Your job is to:
+    - Check the `similarity_score` of each chunk.
+    - If all scores are below 0.80:
+      - Do not forward to answer_agent.
+      - Show a message like: "No strong matches found. Highest similarity was {highest_score:.2f}. Please rephrase your query."
+    - If at least one chunk is >= 0.80:
+      - Forward the chunks to the answer_agent.
+    - You do NOT fetch new data.
+    - You do NOT access the database.
+    - Only validate and route.
+
+    Example logic:
+    - Received 5 chunks: [0.45, 0.61, 0.58, 0.70, 0.63] → Output warning.
+    - Received 5 chunks: [0.45, 0.61, 0.81, 0.78, 0.79] → Forward to answer_agent.
+  verbose: true
+  allow_delegation: true
+  delegate_to: answer_agent
+  max_iter: 1
+  llm:
+  model: "gemma:2b"
+  provider: "ollama"
 
 answer_agent:
   role: Insight Synthesizer

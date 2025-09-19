@@ -3,6 +3,11 @@ research_task:
   expected_output: A list of 3–5 detailed insights about the topic.
   agent: research_agent
 
+validator_task:
+  description: Validate retrieved chunks based on similarity score and forward or halt the process.
+  agent: validator_agent
+  expected_output: Forwarded content to answer_agent or warning message.
+
 answer_task:
   description: Using the research, generate a clear and informative answer about {topic},
     If the input contains "No relevant information found for your query.", 

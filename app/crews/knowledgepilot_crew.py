@@ -3,8 +3,9 @@ from crewai.project import CrewBase, agent, crew, task
 from app.tool.tools import document_retrieval_tool
 from typing import List
 from crewai.agents.agent_builder.base_agent import BaseAgent
+from phoenix_config import tracer
 
-
+@tracer.chain
 @CrewBase
 class KnowledgePilotCrew:
     
@@ -18,7 +19,14 @@ class KnowledgePilotCrew:
             verbose=True,
             tools=[document_retrieval_tool]  
         )
-
+        
+    @agent
+    def validator_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['validator_agent'],
+            verbose=True
+        )
+        
     @agent
     def answer_agent(self) -> Agent:
         return Agent(
@@ -31,13 +39,20 @@ class KnowledgePilotCrew:
         return Task(
             config=self.tasks_config['research_task']
         )
-
+        
+    @task
+    def validator_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['validator_task']
+        )
+        
     @task
     def answer_task(self) -> Task:
         return Task(
             config=self.tasks_config['answer_task']
         )
-
+        
+    @tracer.chain
     @crew
     def crew(self) -> Crew:
         return Crew(
