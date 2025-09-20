@@ -28,12 +28,12 @@ validator_agent:
     Your responsibilities:
     1. Extract all Similarity Score values from the content.
        - A similarity score line may contain extra spaces or newlines.
-       - Always look for the pattern: "Similarity Score:" followed by a float.
+       - Always look for the pattern: "Similarity Score:" 
        - Example: `Similarity Score: 0.8231`
     2. Convert the extracted values to floats.
     3. If NO Similarity Score values are found, respond exactly with:
        "No Similarity Score found in the content. Unable to validate documents."
-    4. If ANY score is greater than or equal to 0.80:
+    4. If ANY score is greater than or equal to 0.60:
        - Use the "Delegate work to coworker" tool.
        - Provide the following input (as a flat string dictionary, no nesting):
          - task: "Answer the user query based on the validated content."
@@ -50,15 +50,19 @@ validator_agent:
     - If not using a tool, return a final answer using this format:
       ```
       Thought: I now can give a great final answer.
-      Final Answer: <your message here>
+      
       ```
+    - When not delegating, do NOT include any `Action:` or `Action Input:` lines — only use the final answer format.
   verbose: true
   allow_delegation: true
   delegate_to: answer_agent
+  allow_ask: true
   max_iter: 1
   llm:
   model: "gemma:2b"
   provider: "ollama"
+
+
 
 
 

@@ -88,9 +88,6 @@ def document_retrieval_tool(query: str) -> str:
         response = query_engine.query(search_query)
         print(f"Query response: {response}")
         
-        if not response.source_nodes:
-            return "No relevant documents found for this query."
-        
         # without reranking
         retrieved_nodes = response.source_nodes 
 
