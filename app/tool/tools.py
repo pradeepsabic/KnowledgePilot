@@ -10,6 +10,7 @@ from typing import Dict, Union, Any
 import logging
 from utils.rank_utils import rerank_returnedchunks
 from phoenix_config import tracer
+import json
 
 
 load_dotenv()
@@ -23,7 +24,7 @@ def document_retrieval_tool(query: str) -> str:
     """
     try:
 
-        print(f"DEBUG: Tool received query parameter: {repr(query)}")
+        print(f"Tool received query parameter: {repr(query)}")
 
         search_query = None
 
@@ -42,7 +43,7 @@ def document_retrieval_tool(query: str) -> str:
         db_url_parts = urlparse(DATABASE_URL)
 
         print(
-            f"DEBUG: Parsed Postgres connection details - "
+            f"Parsed Postgres connection details - "
             f"host: {db_url_parts.hostname}, "
             f"port: {db_url_parts.port}, "
             f"database: {db_url_parts.path.lstrip('/')}, "
@@ -81,16 +82,23 @@ def document_retrieval_tool(query: str) -> str:
 
         # Create a query engine with hybrid search mode
         query_engine = index.as_query_engine(
-            vector_store_query_mode="hybrid", similarity_top_k=5, sparse_top_k=2
+            vector_store_query_mode="hybrid", similarity_top_k=5, sparse_top_k=2,return_source=True
         )
 
         response = query_engine.query(search_query)
-        print(f"DEBUG: Query response: {response}")
-        # retrieved_nodes = response.source_nodes without reranking
+        print(f"Query response: {response}")
+        
+        if not response.source_nodes:
+            return "No relevant documents found for this query."
+        
+        # without reranking
+        retrieved_nodes = response.source_nodes 
 
         # Rerank the retrieved nodes based on cosine similarity
         query_embedding = embed_model.get_text_embedding(query)
-        retrieved_nodes = rerank_returnedchunks(query_embedding, response.source_nodes)
+        if query_embedding is None:
+            return "Error: Could not compute query embedding."
+        # retrieved_nodes = rerank_returnedchunks(query_embedding, response.source_nodes) #uncomment for reranking
 
         if not retrieved_nodes:
             return "No relevant documents found for this query."
@@ -123,17 +131,21 @@ def document_retrieval_tool(query: str) -> str:
                 page_num = node.metadata.get("page_number", "")
                 if page_num:
                     page_info = f" (Page {page_num})"
-
+                    
+            score = getattr(node, "score", None)
+            if score is None:
+                score = getattr(node, "similarity_score", 0.0) or 0.0
+            
             formatted_chunk = (
                 f"**Document Chunk {i}**\n"
-                f"Similarity Score: {getattr(node, 'similarity_score', 0.0):.4f}\n"
+                f"Similarity Score: {score:.4f}\n"
                 f"{source_info}{page_info}{context_info}\n\nContent:\n{content}"
             )
 
             formatted_chunks.append(formatted_chunk)
 
         context = "\n\n" + "=" * 50 + "\n\n".join(formatted_chunks)
-
+        print("Final context returned to agent:\n", context)
         return context
     except Exception as e:
         return f"Error retrieving documents: {str(e)}"

@@ -23,21 +23,35 @@ validator_agent:
   role: Validation Specialist
   goal: Verify retrieved document chunks meet a minimum similarity threshold.
   backstory: |
-    You receive document chunks from the Document Researcher.
-    Your job is to:
-    - Check the `similarity_score` of each chunk.
-    - If all scores are below 0.80:
-      - Do not forward to answer_agent.
-      - Show a message like: "No strong matches found. Highest similarity was {highest_score:.2f}. Please rephrase your query."
-    - If at least one chunk is >= 0.80:
-      - Forward the chunks to the answer_agent.
-    - You do NOT fetch new data.
-    - You do NOT access the database.
-    - Only validate and route.
+    You receive document chunks from the Document Researcher. These include lines like: `Similarity Score: 0.8231`.
 
-    Example logic:
-    - Received 5 chunks: [0.45, 0.61, 0.58, 0.70, 0.63] → Output warning.
-    - Received 5 chunks: [0.45, 0.61, 0.81, 0.78, 0.79] → Forward to answer_agent.
+    Your responsibilities:
+    1. Extract all Similarity Score values from the content.
+       - A similarity score line may contain extra spaces or newlines.
+       - Always look for the pattern: "Similarity Score:" followed by a float.
+       - Example: `Similarity Score: 0.8231`
+    2. Convert the extracted values to floats.
+    3. If NO Similarity Score values are found, respond exactly with:
+       "No Similarity Score found in the content. Unable to validate documents."
+    4. If ANY score is greater than or equal to 0.80:
+       - Use the "Delegate work to coworker" tool.
+       - Provide the following input (as a flat string dictionary, no nesting):
+         - task: "Answer the user query based on the validated content."
+         - context: full content (including similarity score and document text)
+         - coworker: "answer_agent"
+    5. If ALL scores are below 0.30:
+       - Respond exactly with:
+         "No strong matches found. Highest similarity was {highest_score:.2f}. Please rephrase your query."
+
+    Additional Instructions:
+    - Do NOT make assumptions if scores are missing.
+    - Do NOT use tools unless you're delegating or asking a question.
+    - Never write `Tool: None.` — that is not a valid action.
+    - If not using a tool, return a final answer using this format:
+      ```
+      Thought: I now can give a great final answer.
+      Final Answer: <your message here>
+      ```
   verbose: true
   allow_delegation: true
   delegate_to: answer_agent
@@ -45,6 +59,9 @@ validator_agent:
   llm:
   model: "gemma:2b"
   provider: "ollama"
+
+
+
 
 answer_agent:
   role: Insight Synthesizer
