@@ -82,14 +82,17 @@ def document_retrieval_tool(query: str) -> str:
 
         # Create a query engine with hybrid search mode
         query_engine = index.as_query_engine(
-            vector_store_query_mode="hybrid", similarity_top_k=5, sparse_top_k=2,return_source=True
+            vector_store_query_mode="hybrid",
+            similarity_top_k=5,
+            sparse_top_k=2,
+            return_source=True,
         )
 
         response = query_engine.query(search_query)
         print(f"Query response: {response}")
-        
+
         # without reranking
-        retrieved_nodes = response.source_nodes 
+        retrieved_nodes = response.source_nodes
 
         # Rerank the retrieved nodes based on cosine similarity
         query_embedding = embed_model.get_text_embedding(query)
@@ -128,11 +131,11 @@ def document_retrieval_tool(query: str) -> str:
                 page_num = node.metadata.get("page_number", "")
                 if page_num:
                     page_info = f" (Page {page_num})"
-                    
+
             score = getattr(node, "score", None)
             if score is None:
                 score = getattr(node, "similarity_score", 0.0) or 0.0
-            
+
             formatted_chunk = (
                 f"**Document Chunk {i}**\n"
                 f"Similarity Score: {score:.4f}\n"
