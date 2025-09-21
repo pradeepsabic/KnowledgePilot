@@ -89,10 +89,14 @@ def document_retrieval_tool(query: str) -> str:
         )
 
         response = query_engine.query(search_query)
-        print(f"Query response: {response}")
+        # print(f"Query response: {response}")
 
         # without reranking
         retrieved_nodes = response.source_nodes
+        if retrieved_nodes:
+            first_node = retrieved_nodes[0]
+            print(f"First node content: {first_node.get_content()[:100]}")
+            print(f"First node metadata: {getattr(first_node, 'metadata', None)}")
 
         # Rerank the retrieved nodes based on cosine similarity
         query_embedding = embed_model.get_text_embedding(query)
@@ -106,46 +110,52 @@ def document_retrieval_tool(query: str) -> str:
         # Format the retrieved context with source metadata and contextual information
         formatted_chunks = []
         for i, node in enumerate(retrieved_nodes, 1):
-            content = node.get_content()
+            content = node.get_content() or "No content available"
 
-            # Extract from metadata
-            source_info = "Unknown source"
-            context_info = ""
-            page_info = ""
+        # Default metadata values
+        source_info = "Unknown source"
+        context_info = ""
+        page_info = ""
+        score = (
+            getattr(node, "score", None)
+            or getattr(node, "similarity_score", 0.0)
+            or 0.0
+        )
 
-            if hasattr(node, "metadata") and node.metadata:
-
-                file_name = node.metadata.get(
-                    "source_file", node.metadata.get("file_name", "Unknown file")
-                )
-                file_path = node.metadata.get("file_path", "")
-                if file_path:
-                    source_info = f"Source: {os.path.basename(file_path)}"
-                else:
-                    source_info = f"Source: {file_name}"
-
-                context = node.metadata.get("context", "")
-                if context:
-                    context_info = f"\nContext: {context}"
-
-                page_num = node.metadata.get("page_number", "")
-                if page_num:
-                    page_info = f" (Page {page_num})"
-
-            score = getattr(node, "score", None)
-            if score is None:
-                score = getattr(node, "similarity_score", 0.0) or 0.0
-
-            formatted_chunk = (
-                f"**Document Chunk {i}**\n"
-                f"Similarity Score: {score:.4f}\n"
-                f"{source_info}{page_info}{context_info}\n\nContent:\n{content}"
+        # Extract metadata if available
+        if hasattr(node, "metadata") and node.metadata:
+            file_name = (
+                node.metadata.get("source_file")
+                or node.metadata.get("file_name")
+                or "Unknown file"
+            )
+            file_path = node.metadata.get("file_path", "")
+            source_info = (
+                f"Source: {os.path.basename(file_path) if file_path else file_name}"
             )
 
-            formatted_chunks.append(formatted_chunk)
+            page_num = node.metadata.get("page_number")
+            if page_num is not None:
+                page_info = f" (Page {page_num})"
 
+            context_meta = node.metadata.get("context")
+            if context_meta:
+                context_info = f"\nContext: {context_meta}"
+
+        # Construct the formatted chunk
+        formatted_chunk = (
+            f"**Document Chunk {i}**\n"
+            f"Similarity Score: {score:.4f}\n"
+            f"{source_info}{page_info}{context_info}\n\n"
+            f"Content:\n{content}"
+        )
+
+        formatted_chunks.append(formatted_chunk)
+        # Join all chunks into final context
         context = "\n\n" + "=" * 50 + "\n\n".join(formatted_chunks)
+
         print("Final context returned to agent:\n", context)
         return context
+
     except Exception as e:
         return f"Error retrieving documents: {str(e)}"

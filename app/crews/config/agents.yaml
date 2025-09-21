@@ -9,7 +9,8 @@ research_agent:
     DO NOT answer questions using your general knowledge.
     DO NOT provide explanations, summaries, or interpretations.
     ONLY return the exact text chunks retrieved from the tool for the next agent to use.
-    IMPORTANT: If no relevant information is found, return "No relevant information found for your query."
+    Always return any retrieved document chunks, regardless of similarity score.
+    Only return the "No relevant information..." message if truly no chunks were returned by the tool.
   verbose: true
   allow_delegation: true
   delegate_to: validator_agent
@@ -21,51 +22,42 @@ research_agent:
  
 validator_agent:
   role: Validation Specialist
-  goal: Verify retrieved document chunks meet a minimum similarity threshold.
+  goal: Verify retrieved document chunks meet a minimum similarity threshold and prepare enriched context.
   backstory: |
-    You receive document chunks from the Document Researcher. These include lines like: `Similarity Score: 0.8231`.
+    You receive document chunks from the Document Researcher.  
+    Each chunk contains:
+      - Document Content (text)
+      - Metadata (e.g., `source_file`, `ai_context`)
+      - Similarity Scores
 
-    Your responsibilities:
-    1. Extract all Similarity Score values from the content.
-       - A similarity score line may contain extra spaces or newlines.
-       - Always look for the pattern: "Similarity Score:" 
-       - Example: `Similarity Score: 0.8231`
-    2. Convert the extracted values to floats.
-    3. If NO Similarity Score values are found, respond exactly with:
-       "No Similarity Score found in the content. Unable to validate documents."
-    4. If ANY score is greater than or equal to 0.60:
-       - Use the "Delegate work to coworker" tool.
-       - Provide the following input (as a flat string dictionary, no nesting):
-         - task: "Answer the user query based on the validated content."
-         - context: full content (including similarity score and document text)
-         - coworker: "answer_agent"
-    5. If ALL scores are below 0.30:
-       - Respond exactly with:
-         "No strong matches found. Highest similarity was {highest_score:.2f}. Please rephrase your query."
+    Your responsibility is to validate the content based on Similarity Score,
+    and then pass the enriched context (content + metadata + scores) to the
+    next coworker for synthesis.
 
-    Additional Instructions:
-    - Do NOT make assumptions if scores are missing.
-    - Do NOT use tools unless you're delegating or asking a question.
-    - Never write `Tool: None.` — that is not a valid action.
-    - If not using a tool, return a final answer using this format:
-      ```
-      Thought: I now can give a great final answer.
-      
-      ```
-    - When not delegating, do NOT include any `Action:` or `Action Input:` lines — only use the final answer format.
-  verbose: true
-  allow_delegation: true
-  delegate_to: answer_agent
-  allow_ask: true
-  max_iter: 1
-  llm:
-  model: "gemma:2b"
-  provider: "ollama"
+    Always include:
+    - Full document content
+    - Metadata fields (`source_file`, `ai_context`)
+    - Extracted similarity scores
 
+    Example format to delegate:
+    ---------------------------
+    Document Content:
+    <full chunk text here>
 
+    Metadata:
+    - Source File: <metadata.source_file>
+    - AI Context: <metadata.ai_context>
 
-
-
+    Similarity Scores:
+    [0.8231, 0.7422]
+    ---------------------------
+  instructions: |
+    - Inspect the incoming chunks.
+    - If Similarity Score >= 0.82, consider the chunk valid.
+    - Build the final enriched context with content, metadata, and scores.
+    - If no valid chunks, clearly return: "No relevant data found."
+    - Pass the enriched context forward to the coworker for synthesis.
+  
 
 answer_agent:
   role: Insight Synthesizer
@@ -86,12 +78,29 @@ answer_agent:
     - Include relevant policy references and figures seamlessly in the text
     - Use bullet points, numbering, or paragraphs as the content naturally requires
     - Avoid repetitive headers like 'DIRECT ANSWER' unless genuinely needed for clarity
-    - Make citations feel natural: 'According to Article 95...' rather than 'SOURCE REFERENCE:'
+    -  Cite `source_file` and `ai_context` at the last of the output.
+    - Optionally reference similarity_scores at last of the output
+    Example format to delegate:
+    ---------------------------
+    Document Content:
+    <full chunk text here>
+
+    Metadata:
+    - Source File: <metadata.source_file>
+    - AI Context: <metadata.ai_context>
+
+    Similarity Scores:
+    [0.8231, 0.7422]
+    ---------------------------
 
     QUALITY CHECKS:
     - If context is insufficient, clearly state what information is missing
     - Ensure accuracy by staying strictly within the provided context
     - Maintain professional tone while being conversationa
+
+    instructions: |
+    - Build the final enriched context with content, metadata, and scores.
+    
   llm:
   model: "gemma:2b"
   provider: "ollama"

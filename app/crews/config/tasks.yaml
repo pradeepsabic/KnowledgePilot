@@ -4,7 +4,7 @@ research_task:
   agent: research_agent
 
 validator_task:
-  description: Validate retrieved chunks based on similarity score and forward or halt the process.
+  description: Validate retrieved chunks based on Similarity Score and forward.
   agent: validator_agent
   expected_output: Forwarded content to answer_agent or warning message.
 
