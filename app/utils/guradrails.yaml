@@ -1,0 +1,14 @@
+version: 1
+input:
+  query:
+    type: string
+    min_length: 1
+    max_length: 1000
+    description: "User query must be non-empty and less than 1000 chars"
+
+output:
+  response:
+    type: string
+    min_length: 1
+    max_length: 2000
+    description: "Assistant response must be non-empty and safe"

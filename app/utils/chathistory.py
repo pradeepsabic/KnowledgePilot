@@ -41,10 +41,15 @@ class ChatHistoryManager:
         )
 
     def rewrite_query(self, user_input: str):
-        """Rewrites the user query with context from previous messages."""
-        self.add_message("user", user_input)
+        # Build context BEFORE adding the current message
         context = self.build_context()
+
+        # Include the current user message separately
         rewritten_query = (
             f"Given the previous discussion:\n{context}\n\nUser Query: {user_input}"
         )
+
+        # Now add the current user message to history
+        self.add_message("user", user_input)
+
         return rewritten_query

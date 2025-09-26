@@ -1,6 +1,6 @@
 ollama_llm:
   provider: ollama
-  model: gemma3:4b
+  model: gemma:2b
   base_url: "http://localhost:11434"
   temperature: 1
   timeout: 300
