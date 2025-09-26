@@ -53,7 +53,7 @@ validator_agent:
     ---------------------------
   instructions: |
     - Inspect the incoming chunks.
-    - If Similarity Score >= 0.82, consider the chunk valid.
+    - Filter each chunk based on similarity scores: only include chunks where **at least one score >= 0.82**.
     - Build the final enriched context with content, metadata, and scores.
     - If no valid chunks, clearly return: "No relevant data found."
     - Pass the enriched context forward to the coworker for synthesis.
