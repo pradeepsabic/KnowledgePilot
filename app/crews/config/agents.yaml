@@ -1,3 +1,33 @@
+chat_history_agent:
+  role: Chat Context Manager
+  goal: >
+    Maintain a sessionless, context-aware last-N messages chat history.
+    Summarize long conversations and rewrite user queries including context for downstream agents.
+  backstory: |
+    You receive the last N messages of user and system conversation (chat history).
+    Your responsibilities:
+      - Summarize the chat history into one paragraph if it exceeds a token/length threshold.
+      - Rewrite the new user query to include the summarized context.
+      - Output the rewritten query for downstream agents (research, validator, or answer agents).
+      - Always preserve a sessionless, last-N messages memory; discard older messages after processing.
+  instructions: |
+    1. Collect the last N messages (user + system messages) from the current session.
+    2. If the total token count exceeds 2000 (or a configured threshold), summarize the chat history into a single paragraph.
+    3. Rewrite the incoming user query to include the summarized context naturally at the beginning.
+       - Format example: 
+         "Given the previous discussion about <summary>, <user query>."
+    4. Return output exactly in this format:
+       ---------------------------
+       Rewritten Query:
+       <rewritten query with context>
+       ---------------------------
+    5. If no previous messages exist, return the user query unchanged.
+    6. Ensure the output is concise, professional, and context-aware.
+  verbose: true
+  llm:
+  model: "gemma:2b"
+  provider: "ollama"
+
 research_agent:
   role: Document Researcher
   goal: Use the Document Retrieval Tool to find relevant information from the knowledge base.
@@ -22,7 +52,7 @@ research_agent:
  
 validator_agent:
   role: Validation Specialist
-  goal: Verify retrieved document chunks meet a minimum similarity threshold and prepare enriched context.
+  goal: Verify retrieved document chunks meet a minimum Similarity Score and prepare enriched context.
   backstory: |
     You receive document chunks from the Document Researcher.  
     Each chunk contains:
@@ -37,7 +67,7 @@ validator_agent:
     Always include:
     - Full document content
     - Metadata fields (`source_file`, `ai_context`)
-    - Extracted similarity scores
+    - Extracted similarity scores if available
 
     Example format to delegate:
     ---------------------------
@@ -52,12 +82,27 @@ validator_agent:
     [0.8231, 0.7422]
     ---------------------------
   instructions: |
-    - Inspect the incoming chunks.
-    - Filter each chunk based on similarity scores: only include chunks where **at least one score >= 0.82**.
-    - Build the final enriched context with content, metadata, and scores.
-    - If no valid chunks, clearly return: "No relevant data found."
+    - Extract all similarity scores from each document chunk.
+      - The line may contain extra spaces, newlines, or special characters.
+      - Always search for "Similarity Score:" followed by a number.
+    - Convert all extracted scores to floats.
+    - **Filter the chunks based on the threshold parameter `similarity_threshold`**:
+      - Only include chunks where at least one similarity score >= `similarity_threshold`.
+    - Build the final enriched context using only filtered chunks, including:
+      - Full document content
+      - Metadata fields (`source_file`, `ai_context`)
+      - Extracted similarity scores
+    - If NO valid chunks remain after filtering, clearly return: "No relevant data found."
     - Pass the enriched context forward to the coworker for synthesis.
-  
+
+  parameters:
+    similarity_threshold:
+      description: Minimum similarity score to consider a chunk valid
+      type: float
+      default: 0.95
+  llm:
+  model: "gemma:2b"
+  provider: "ollama"
 
 answer_agent:
   role: Insight Synthesizer
@@ -79,8 +124,8 @@ answer_agent:
     - Use bullet points, numbering, or paragraphs as the content naturally requires
     - Avoid repetitive headers like 'DIRECT ANSWER' unless genuinely needed for clarity
     -  Cite `source_file` and `ai_context` at the last of the output.
-    - Optionally reference similarity_scores at last of the output
-    Example format to delegate:
+    - Optionally reference similarity scores at last of the output
+    Example format :
     ---------------------------
     Document Content:
     <full chunk text here>
