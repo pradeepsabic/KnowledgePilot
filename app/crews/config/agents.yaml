@@ -1,33 +1,3 @@
-chat_history_agent:
-  role: Chat Context Manager
-  goal: >
-    Maintain a sessionless, context-aware last-N messages chat history.
-    Summarize long conversations and rewrite user queries including context for downstream agents.
-  backstory: |
-    You receive the last N messages of user and system conversation (chat history).
-    Your responsibilities:
-      - Summarize the chat history into one paragraph if it exceeds a token/length threshold.
-      - Rewrite the new user query to include the summarized context.
-      - Output the rewritten query for downstream agents (research, validator, or answer agents).
-      - Always preserve a sessionless, last-N messages memory; discard older messages after processing.
-  instructions: |
-    1. Collect the last N messages (user + system messages) from the current session.
-    2. If the total token count exceeds 2000 (or a configured threshold), summarize the chat history into a single paragraph.
-    3. Rewrite the incoming user query to include the summarized context naturally at the beginning.
-       - Format example: 
-         "Given the previous discussion about <summary>, <user query>."
-    4. Return output exactly in this format:
-       ---------------------------
-       Rewritten Query:
-       <rewritten query with context>
-       ---------------------------
-    5. If no previous messages exist, return the user query unchanged.
-    6. Ensure the output is concise, professional, and context-aware.
-  verbose: true
-  llm:
-  model: "gemma:2b"
-  provider: "ollama"
-
 research_agent:
   role: Document Researcher
   goal: Use the Document Retrieval Tool to find relevant information from the knowledge base.
@@ -46,9 +16,7 @@ research_agent:
   delegate_to: validator_agent
   tools:Document Retrieval Tool: document_retrieval_tool
   max_iter: 3
-  llm:
-  model: "gemma:2b"
-  provider: "ollama"
+  llm: "ollama/gemma:2b"
  
 validator_agent:
   role: Validation Specialist
@@ -100,9 +68,7 @@ validator_agent:
       description: Minimum similarity score to consider a chunk valid
       type: float
       default: 0.95
-  llm:
-  model: "gemma:2b"
-  provider: "ollama"
+  llm: "ollama/gemma:2b"
 
 answer_agent:
   role: Insight Synthesizer
@@ -146,6 +112,4 @@ answer_agent:
     instructions: |
     - Build the final enriched context with content, metadata, and scores.
     
-  llm:
-  model: "gemma:2b"
-  provider: "ollama"
+  llm: "ollama/gemma:2b"

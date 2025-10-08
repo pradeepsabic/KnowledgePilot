@@ -55,7 +55,6 @@ class KnowledgePilotCrew:
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
-            memory=True,  # Enables short-term, long-term, and entity memory
-            long_term_memory=persistent_memory,
+            memory=False,  # Enables short-term, long-term, and entity memory
             iterations=1,
         )
